@@ -1,34 +1,22 @@
-      - job: build_app
-        displayName: Build Serverless Deployment Package
-        pool:
-          vmImage: ubuntu-16.04
-        steps:
+trigger: none
 
-          - task: UsePythonVersion@0
-            inputs:
-              versionSpec: '3.7'
-              addToPath: true
-            displayName: Install Python
+variables:
+- group: image-build
 
-          - task: NodeTool@0
-            inputs:
-              versionSpec: '>10.x.x'
-            displayName: Install Node
+jobs:
+- job: s3_to_azureblob
+  pool:
+    vmImage: 'Ubuntu-20.04'
+  steps:
 
-          - bash: npm install -no-cache
-            displayName: Install Serverless Dependencies and Plugins
+  - bash: |
+          sudo apt update -y
+          sudo apt install awscli -y 
+  - bash: |
+          sudo aws --version
+  - bash: |
+          sudo aws s3 ls
 
-          - task: AWSShellScript@1
-            inputs:
-              awsCredentials: 'dev'
-              regionName: 'eu-central-1'
-              scriptType: 'inline'
-              inlineScript: |
-                                ./node_modules/.bin/serverless package --stage dev --region eu-central-1 --package /tmp/dev_artifacts/
-            displayName: Package for Dev Environment
-
-          - task: PublishBuildArtifacts@1
-            inputs:
-              pathToPublish: /tmp/dev_artifacts
-              artifactName: dev_artifacts
-            displayName: Export Dev Artifacts
+    env:
+      aws_access_key_id: $(aws_access_key_id)
+      aws_secret_access_key: $(aws_secret_access_key)
